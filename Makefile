@@ -1,5 +1,12 @@
-.PHONY: generate deps build-linux build-macos run-linux run-macos build-linux-app build-macos-app run-backend-standalone test lint format clean
+.PHONY: setup generate deps build-linux build-macos run-linux run-macos build-linux-app build-macos-app run-backend-standalone test lint format clean
 
+# === Initialization ===
+setup:
+	go run scripts/setup.go
+	make generate
+	make deps
+
+# === Code Generation ===
 generate:
 	cd proto && buf generate
 
