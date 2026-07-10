@@ -1,0 +1,12 @@
+version: v1
+plugins:
+  - plugin: buf.build/protocolbuffers/go
+    out: ../backend/gen
+    opt: paths=source_relative
+  - plugin: buf.build/connectrpc/go
+    out: ../backend/gen
+    opt: paths=source_relative
+  - plugin: buf.build/protocolbuffers/dart
+    out: ../frontend/lib/src/gen
+  - plugin: buf.build/connectrpc/dart
+    out: ../frontend/lib/src/gen

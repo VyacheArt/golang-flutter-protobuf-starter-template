@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package sysinfo.v1;
+
+option go_package = "template/backend/gen/sysinfo/v1;sysinfov1";
+
+message GetSystemInfoRequest {}
+
+message GetSystemInfoResponse {
+  string hostname = 1;
+  string go_version = 2;
+  string os = 3;
+}
+
+message WatchMetricsRequest {}
+
+message WatchMetricsResponse {
+  uint64 allocated_memory = 1;
+  uint64 num_goroutines = 2;
+}
+
+service SysInfoService {
+  rpc GetSystemInfo(GetSystemInfoRequest) returns (GetSystemInfoResponse) {}
+  rpc WatchMetrics(WatchMetricsRequest) returns (stream WatchMetricsResponse) {}
+}
