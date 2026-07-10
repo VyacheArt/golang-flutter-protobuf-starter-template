@@ -27,6 +27,8 @@ class BackendRunner {
       libName = 'libbackend.dylib';
     } else if (Platform.isWindows) {
       libName = 'libbackend.dll';
+    } else if (Platform.isAndroid) {
+      libName = 'libbackend.so';
     } else {
       throw UnsupportedError('Unsupported platform for FFI');
     }

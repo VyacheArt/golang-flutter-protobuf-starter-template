@@ -19,8 +19,13 @@ frontend/linux/libbackend.so
 frontend/linux/libbackend.h
 frontend/macos/libbackend.dylib
 frontend/macos/libbackend.h
+frontend/android/app/src/main/jniLibs/
 
 # Misc
 *.sock
 *.log
 .DS_Store
+frontend/.nix-flutter-tools
+.gradle/
+frontend/android/build/
+frontend/android/.gradle/
