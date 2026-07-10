@@ -5,7 +5,6 @@ frontend/.pub-cache/
 frontend/.pub/
 frontend/build/
 frontend/coverage/
-frontend/lib/src/gen/
 frontend/*.iml
 frontend/android/local.properties
 frontend/ios/.symlinks/
@@ -14,7 +13,6 @@ frontend/.flutter-plugins
 frontend/.flutter-plugins-dependencies
 
 # Go / Buf
-backend/gen/
 frontend/linux/libbackend.so
 frontend/linux/libbackend.h
 frontend/macos/libbackend.dylib
