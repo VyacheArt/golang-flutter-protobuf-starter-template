@@ -7,8 +7,11 @@ on:
     branches: ["main"]
 
 jobs:
-  build-ubuntu:
-    runs-on: ubuntu-latest
+  build-linux:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -40,20 +43,41 @@ jobs:
       - name: Upload Linux App
         uses: actions/upload-artifact@v4
         with:
-          name: linux-app
-          path: frontend/build/linux/x64/release/bundle/
+          name: linux-app-${{ matrix.os }}
+          path: frontend/build/linux/*/release/bundle/
+
+      - name: Setup Android Keystore
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && matrix.os == 'ubuntu-latest' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > frontend/android/app/release.jks
+          cat <<EOF > frontend/android/key.properties
+          storePassword=$ANDROID_STORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=release.jks
+          EOF
 
       - name: Build Android APK
+        if: matrix.os == 'ubuntu-latest'
         run: nix develop -c make build-android-apk
 
       - name: Upload Android APK
+        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
           name: app-release.apk
           path: frontend/build/app/outputs/flutter-apk/app-release.apk
 
   # build-macos:
-  #   runs-on: macos-latest
+  #   strategy:
+  #     matrix:
+  #       os: [macos-13, macos-latest]
+  #   runs-on: ${{ matrix.os }}
   #   steps:
   #     - uses: actions/checkout@v4
 
@@ -74,5 +98,5 @@ jobs:
   #     - name: Upload macOS App
   #       uses: actions/upload-artifact@v4
   #       with:
-  #         name: macos-app
+  #         name: macos-app-${{ matrix.os }}
   #         path: frontend/build/macos/Build/Products/Release/
