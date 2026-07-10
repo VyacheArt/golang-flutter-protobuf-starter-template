@@ -1,7 +1,7 @@
 # Golang + Flutter + Protobuf Starter Template
 
 A starter template for cross-platform applications.
-It features a Flutter frontend and a Go backend running seamlessly in a single process via FFI, communicating over a Unix Domain Socket (UDS) with ConnectRPC (protobuf).
+It features a Flutter frontend and a Go backend running seamlessly in a single process via FFI, communicating over a Unix Domain Socket (UDS) with [ConnectRPC](https://connectrpc.com/) (protobuf).
 
 ## Features
 - **Single-Process Architecture**: Go backend is compiled as a C-shared library and loaded directly into Flutter via FFI.
