@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build-linux:
@@ -20,8 +20,17 @@ jobs:
       - name: Setup Nix cache
         uses: DeterminateSystems/magic-nix-cache-action@v8
 
+      - name: Fetch Dependencies
+        run: nix develop -c make deps
+
       - name: Build Linux Desktop
-        run: nix develop -c make build-linux
+        run: nix develop -c make build-linux-app
+
+      - name: Upload Linux App
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-app
+          path: frontend/build/linux/x64/release/bundle/
 
   build-android:
     runs-on: ubuntu-latest
@@ -36,6 +45,9 @@ jobs:
       - name: Setup Nix cache
         uses: DeterminateSystems/magic-nix-cache-action@v8
 
+      - name: Fetch Dependencies
+        run: nix develop -c make deps
+
       - name: Build Android APK
         run: nix develop -c make build-android-apk
 
@@ -45,18 +57,27 @@ jobs:
           name: app-release.apk
           path: frontend/build/app/outputs/flutter-apk/app-release.apk
 
-  build-macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
+  # build-macos:
+  #   runs-on: macos-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Install Nix
-        uses: cachix/install-nix-action@v30
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
+  #     - name: Install Nix
+  #       uses: cachix/install-nix-action@v30
+  #       with:
+  #         nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Setup Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@v8
+  #     - name: Setup Nix cache
+  #       uses: DeterminateSystems/magic-nix-cache-action@v8
 
-      - name: Build macOS Desktop
-        run: nix develop -c make build-macos
+  #     - name: Fetch Dependencies
+  #       run: nix develop -c make deps
+
+  #     - name: Build macOS Desktop
+  #       run: nix develop -c make build-macos-app
+
+  #     - name: Upload macOS App
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: macos-app
+  #         path: frontend/build/macos/Build/Products/Release/
