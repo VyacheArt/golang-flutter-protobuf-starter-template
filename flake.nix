@@ -3,13 +3,18 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # Unstable (26.11) dropped x86_64-darwin; the 26.05 stable branch keeps
+    # supporting Intel Macs until the end of 2026
+    nixpkgs-x86_64-darwin.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, nixpkgs-x86_64-darwin, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs {
+        nixpkgsForSystem =
+          if system == "x86_64-darwin" then nixpkgs-x86_64-darwin else nixpkgs;
+        pkgs = import nixpkgsForSystem {
           inherit system;
           config = {
             allowUnfree = true;
