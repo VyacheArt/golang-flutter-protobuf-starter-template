@@ -40,6 +40,12 @@ It automatically replaces all configurations, moves Android activities to the co
 - `nix develop` - Full environment: Go, Flutter, Buf, JDK 17, Android SDK/NDK
 - `nix develop .#desktop` - Slim environment without the Android toolchain; used by CI for desktop builds and quality checks
 
+On Intel Macs pass extra flags (the flake already uses the Intel-supporting `nixpkgs-26.05-darwin` branch for `x86_64-darwin`, but `nix develop` itself resolves its inner bash through the `nixpkgs` input, which dropped Intel support):
+
+```bash
+nix develop --no-write-lock-file --override-input nixpkgs github:NixOS/nixpkgs/nixpkgs-26.05-darwin
+```
+
 ## CI Signing Secrets
 
 CI builds unsigned artifacts by default. Add repository secrets to enable signing:

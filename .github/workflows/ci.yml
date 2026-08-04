@@ -138,7 +138,18 @@ jobs:
   build-macos:
     strategy:
       matrix:
-        os: [macos-15-intel, macos-latest]
+        include:
+          - os: macos-latest
+            nix-flags: ""
+          # `nix develop` resolves bashInteractive through the flake's
+          # `nixpkgs` input, which throws on x86_64-darwin (dropped from
+          # unstable) and silently falls back to the system bash 3.2 that
+          # chokes on the generated env script — point the input at the
+          # Intel-supporting branch for this job
+          - os: macos-15-intel
+            nix-flags: >-
+              --no-write-lock-file
+              --override-input nixpkgs github:NixOS/nixpkgs/nixpkgs-26.05-darwin
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -158,10 +169,10 @@ jobs:
           purge-primary-key: never
 
       - name: Fetch Dependencies
-        run: nix develop .#desktop -c make deps
+        run: nix develop ${{ matrix.nix-flags }} .#desktop -c make deps
 
       - name: Build macOS Desktop
-        run: nix develop .#desktop -c make build-macos-app
+        run: nix develop ${{ matrix.nix-flags }} .#desktop -c make build-macos-app
 
       - name: Import Code Signing Certificate
         # The secrets context is not available in step-level `if`, so the
