@@ -49,8 +49,15 @@ run-macos: build-macos
 build-linux-app: build-linux
 	cd frontend && flutter build linux
 
+# Embeds the Go dylib into the .app and re-signs ad-hoc (adding a file breaks
+# the code-signature seal). CI re-signs with a real identity afterwards.
 build-macos-app: build-macos
 	cd frontend && flutter build macos
+	APP_PATH="$$(ls -d frontend/build/macos/Build/Products/Release/*.app | head -1)"; \
+	mkdir -p "$$APP_PATH/Contents/Frameworks"; \
+	cp frontend/macos/libbackend.dylib "$$APP_PATH/Contents/Frameworks/"; \
+	codesign --force --sign - "$$APP_PATH/Contents/Frameworks/libbackend.dylib"; \
+	codesign --force --sign - "$$APP_PATH"
 
 build-android-apk: build-android-arm64
 	cd frontend && flutter build apk --target-platform android-arm64 --release

@@ -51,7 +51,15 @@ class BackendRunner {
         return DynamicLibrary.open(bundledPath);
       }
 
-      // Fallback 2: Local development via `flutter run` from project root
+      // Fallback 2: Production bundle on macOS (Contents/Frameworks inside the .app)
+      if (Platform.isMacOS) {
+        final frameworksPath = '$exeDir/../Frameworks/$name';
+        if (File(frameworksPath).existsSync()) {
+          return DynamicLibrary.open(frameworksPath);
+        }
+      }
+
+      // Fallback 3: Local development via `flutter run` from project root
       final platformDir = Platform.isLinux ? 'linux' : Platform.isMacOS ? 'macos' : 'windows';
       final devPath = '${Directory.current.path}/$platformDir/$name';
       if (File(devPath).existsSync()) {

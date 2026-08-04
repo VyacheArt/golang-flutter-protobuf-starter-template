@@ -2,7 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>com.apple.security.app-sandbox</key>
-	<true/>
+	<!-- App Sandbox is intentionally disabled: the app dlopen()s the Go
+	     backend dylib and is meant to be distributed outside the Mac App
+	     Store with a self-updater. Re-enable it if you target the MAS. -->
 </dict>
 </plist>

@@ -135,36 +135,101 @@ jobs:
           name: android-apk
           path: frontend/build/app/outputs/flutter-apk/app-release.apk
 
-  # build-macos:
-  #   strategy:
-  #     matrix:
-  #       os: [macos-15-intel, macos-latest]
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v7
-  #
-  #     - name: Install Nix
-  #       uses: cachix/install-nix-action@v31
-  #
-  #     - name: Setup Nix cache
-  #       uses: nix-community/cache-nix-action@v7
-  #       with:
-  #         primary-key: nix-desktop-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.nix', 'flake.lock') }}
-  #         restore-prefixes-first-match: nix-desktop-${{ runner.os }}-${{ runner.arch }}-
-  #         gc-max-store-size-macos: 5G
-  #         purge: true
-  #         purge-prefixes: nix-desktop-${{ runner.os }}-${{ runner.arch }}-
-  #         purge-created: 0
-  #         purge-primary-key: never
-  #
-  #     - name: Fetch Dependencies
-  #       run: nix develop .#desktop -c make deps
-  #
-  #     - name: Build macOS Desktop
-  #       run: nix develop .#desktop -c make build-macos-app
-  #
-  #     - name: Upload macOS App
-  #       uses: actions/upload-artifact@v7
-  #       with:
-  #         name: macos-app-${{ matrix.os }}
-  #         path: frontend/build/macos/Build/Products/Release/
+  build-macos:
+    strategy:
+      matrix:
+        os: [macos-15-intel, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Setup Nix cache
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-desktop-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.nix', 'flake.lock') }}
+          restore-prefixes-first-match: nix-desktop-${{ runner.os }}-${{ runner.arch }}-
+          gc-max-store-size-macos: 5G
+          purge: true
+          purge-prefixes: nix-desktop-${{ runner.os }}-${{ runner.arch }}-
+          purge-created: 0
+          purge-primary-key: never
+
+      - name: Fetch Dependencies
+        run: nix develop .#desktop -c make deps
+
+      - name: Build macOS Desktop
+        run: nix develop .#desktop -c make build-macos-app
+
+      - name: Import Code Signing Certificate
+        # The secrets context is not available in step-level `if`, so the
+        # presence check goes through an env var instead
+        if: ${{ env.HAS_SECRET == 'true' }}
+        env:
+          HAS_SECRET: ${{ secrets.MACOS_CERT_P12_BASE64 != '' }}
+          MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 24)"
+          echo "$MACOS_CERT_P12_BASE64" | base64 --decode > cert.p12
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 build.keychain
+          security import cert.p12 -k build.keychain -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          rm cert.p12
+
+      - name: Sign macOS App
+        if: ${{ env.HAS_SECRET == 'true' }}
+        env:
+          HAS_SECRET: ${{ secrets.MACOS_CERT_P12_BASE64 != '' }}
+        run: |
+          APP_PATH="$(ls -d frontend/build/macos/Build/Products/Release/*.app | head -1)"
+          IDENTITY="$(security find-identity -v -p codesigning build.keychain \
+            | grep -o '"Developer ID Application[^"]*"' | head -1 | tr -d '"')"
+          echo "Signing with: $IDENTITY"
+          # Notarization requires every nested Mach-O to carry a Developer ID
+          # signature with hardened runtime; `flutter build` only signs ad-hoc
+          find "$APP_PATH/Contents/Frameworks" -depth \
+            \( -name "*.framework" -o -name "*.dylib" \) -print0 \
+            | while IFS= read -r -d '' item; do
+              codesign --force --options runtime --timestamp --sign "$IDENTITY" "$item"
+            done
+          codesign --force --options runtime --timestamp \
+            --entitlements frontend/macos/Runner/Release.entitlements \
+            --sign "$IDENTITY" "$APP_PATH"
+          codesign --verify --strict --deep "$APP_PATH"
+
+      - name: Notarize macOS App
+        if: ${{ env.HAS_SECRET == 'true' }}
+        env:
+          HAS_SECRET: ${{ secrets.MACOS_CERT_P12_BASE64 != '' && secrets.APPLE_ID != '' }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          APP_PATH="$(ls -d frontend/build/macos/Build/Products/Release/*.app | head -1)"
+          ditto -c -k --keepParent "$APP_PATH" notarize.zip
+          xcrun notarytool submit notarize.zip \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+          xcrun stapler staple "$APP_PATH"
+          rm notarize.zip
+
+      - name: Package macOS App
+        # upload-artifact strips symlinks and executable bits, which corrupts
+        # .app bundles — zip with ditto first to preserve them
+        run: |
+          APP_PATH="$(ls -d frontend/build/macos/Build/Products/Release/*.app | head -1)"
+          ditto -c -k --keepParent "$APP_PATH" macos-app.zip
+
+      - name: Upload macOS App
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-app-${{ matrix.os }}
+          path: macos-app.zip

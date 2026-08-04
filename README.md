@@ -40,6 +40,21 @@ It automatically replaces all configurations, moves Android activities to the co
 - `nix develop` - Full environment: Go, Flutter, Buf, JDK 17, Android SDK/NDK
 - `nix develop .#desktop` - Slim environment without the Android toolchain; used by CI for desktop builds and quality checks
 
+## CI Signing Secrets
+
+CI builds unsigned artifacts by default. Add repository secrets to enable signing:
+
+**Android** (skipped when `ANDROID_KEYSTORE_BASE64` is empty):
+- `ANDROID_KEYSTORE_BASE64` — keystore file, base64-encoded
+- `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`, `ANDROID_STORE_PASSWORD`
+
+**macOS** (requires an Apple Developer Program membership; skipped when `MACOS_CERT_P12_BASE64` is empty):
+- `MACOS_CERT_P12_BASE64` — "Developer ID Application" certificate + private key exported as `.p12`, base64-encoded
+- `MACOS_CERT_PASSWORD` — password of the `.p12`
+- `APPLE_ID`, `APPLE_APP_PASSWORD`, `APPLE_TEAM_ID` — Apple ID, an [app-specific password](https://support.apple.com/102654), and Team ID for notarization (notarization is skipped when `APPLE_ID` is empty)
+
+Signed + notarized macOS builds pass Gatekeeper on download. Unsigned (ad-hoc) builds require `xattr -cr MyApp.app` after unzipping.
+
 ## TCP vs UDS
 
 By default, the template uses UDS (Unix Domain Sockets) in production and development for maximum performance.
