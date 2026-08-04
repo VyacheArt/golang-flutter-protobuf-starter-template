@@ -38,7 +38,7 @@ It automatically replaces all configurations, moves Android activities to the co
 ## Nix Development Shells
 
 - `nix develop` - Full environment: Go, Flutter, Buf, JDK 17, Android SDK/NDK
-- `nix develop .#desktop` - Slim environment without the Android toolchain; used by CI for desktop builds and quality checks
+- `nix develop .#desktop` - Slim environment without the Android toolchain; used by CI for Linux desktop builds and quality checks (macOS CI jobs use the official Flutter/Go toolchains instead — the read-only `/nix/store` breaks Flutter's in-place `lipo` thinning of `FlutterMacOS.framework`)
 
 On Intel Macs pass extra flags (the flake already uses the Intel-supporting `nixpkgs-26.05-darwin` branch for `x86_64-darwin`, but `nix develop` itself resolves its inner bash through the `nixpkgs` input, which dropped Intel support):
 
