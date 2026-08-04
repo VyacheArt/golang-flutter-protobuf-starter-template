@@ -263,15 +263,23 @@ jobs:
           cache-dependency-path: backend/go.sum
 
       - name: Setup Flutter
+        if: matrix.arch == 'x64'
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-          # The Flutter SDK for Windows is published as x64 only; on
-          # windows-11-arm it runs under x64 emulation but still produces
-          # native arm64 builds. Without this the action fails trying to
-          # resolve an arm64 SDK
-          architecture: x64
+
+      # The downloadable Flutter SDK for Windows is x64-only; under x64
+      # emulation `flutter build windows` silently produces an x64 app in
+      # build/windows/x64. Installing from git instead makes the bootstrap
+      # fetch a native arm64 Dart SDK, so the tool targets arm64 natively
+      - name: Setup Flutter (arm64, from git)
+        if: matrix.arch == 'arm64'
+        shell: bash
+        run: |
+          git clone --depth 1 -b stable https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          cygpath -w "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/flutter/bin/flutter" --version
 
       # cgo needs a GCC-compatible toolchain; the arm64 runner only ships
       # MSVC-flavored LLVM, so fetch llvm-mingw (x64 has MinGW preinstalled)
