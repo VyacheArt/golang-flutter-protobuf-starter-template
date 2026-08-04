@@ -267,6 +267,11 @@ jobs:
         with:
           channel: stable
           cache: true
+          # The Flutter SDK for Windows is published as x64 only; on
+          # windows-11-arm it runs under x64 emulation but still produces
+          # native arm64 builds. Without this the action fails trying to
+          # resolve an arm64 SDK
+          architecture: x64
 
       # cgo needs a GCC-compatible toolchain; the arm64 runner only ships
       # MSVC-flavored LLVM, so fetch llvm-mingw (x64 has MinGW preinstalled)
