@@ -17,6 +17,8 @@ frontend/linux/libbackend.so
 frontend/linux/libbackend.h
 frontend/macos/libbackend.dylib
 frontend/macos/libbackend.h
+frontend/windows/libbackend.dll
+frontend/windows/libbackend.h
 frontend/android/app/src/main/jniLibs/
 
 # Misc

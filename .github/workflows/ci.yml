@@ -236,3 +236,123 @@ jobs:
         with:
           name: macos-app-${{ matrix.os }}
           path: macos-app.zip
+
+  build-windows:
+    strategy:
+      matrix:
+        # `flutter build windows` always targets the host architecture, so
+        # each arch needs its own runner. windows-11-arm is free for public
+        # repos; in private repos it bills standard Actions minutes
+        # (2x Windows multiplier)
+        include:
+          - os: windows-latest
+            arch: x64
+          - os: windows-11-arm
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # Windows builds use the official toolchains (like macOS) and inline
+      # the make recipes: GNU make is not available in Git Bash on the
+      # runners, and the windows-11-arm partner image has no chocolatey
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # cgo needs a GCC-compatible toolchain; the arm64 runner only ships
+      # MSVC-flavored LLVM, so fetch llvm-mingw (x64 has MinGW preinstalled)
+      - name: Install llvm-mingw
+        if: matrix.arch == 'arm64'
+        shell: bash
+        env:
+          LLVM_MINGW_TAG: "20260616"
+        run: |
+          curl -fsSL -o llvm-mingw.zip \
+            "https://github.com/mstorsjo/llvm-mingw/releases/download/${LLVM_MINGW_TAG}/llvm-mingw-${LLVM_MINGW_TAG}-ucrt-aarch64.zip"
+          unzip -q llvm-mingw.zip -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/llvm-mingw-${LLVM_MINGW_TAG}-ucrt-aarch64/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch Dependencies
+        shell: bash
+        run: |
+          cd backend && go mod tidy
+          cd ../frontend && flutter pub get
+
+      - name: Build Go Shared Library
+        shell: bash
+        env:
+          CGO_ENABLED: "1"
+          CC: ${{ matrix.arch == 'arm64' && 'aarch64-w64-mingw32-clang' || 'gcc' }}
+        run: |
+          cd backend
+          go build -buildmode=c-shared -o ../frontend/windows/libbackend.dll ./cmd/shared/main.go
+
+      - name: Build Windows Desktop
+        shell: bash
+        run: cd frontend && flutter build windows
+
+      - name: Upload Windows App
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-app-${{ matrix.arch }}
+          path: frontend/build/windows/${{ matrix.arch }}/runner/Release/
+
+  sign-windows:
+    # Azure Artifact Signing (formerly Trusted Signing); all steps are
+    # skipped when AZURE_SIGNING_ENDPOINT is not set. Runs as a separate x64
+    # job because azure/artifact-signing-action does not support arm
+    # runners (signing arm64 binaries from an x64 host works fine)
+    needs: build-windows
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+    runs-on: windows-latest
+    steps:
+      - name: Download Windows App
+        # The secrets context is not available in step-level `if`, so the
+        # presence check goes through an env var instead
+        if: ${{ env.HAS_SECRET == 'true' }}
+        env:
+          HAS_SECRET: ${{ secrets.AZURE_SIGNING_ENDPOINT != '' }}
+        uses: actions/download-artifact@v6
+        with:
+          name: windows-app-${{ matrix.arch }}
+          path: app
+
+      - name: Sign Windows Binaries
+        if: ${{ env.HAS_SECRET == 'true' }}
+        env:
+          HAS_SECRET: ${{ secrets.AZURE_SIGNING_ENDPOINT != '' }}
+        uses: azure/artifact-signing-action@v2
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_SIGNING_PROFILE }}
+          files-folder: ${{ github.workspace }}\app
+          files-folder-filter: exe,dll
+          file-digest: SHA256
+          # Timestamping is mandatory: Artifact Signing certs live ~3 days
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Upload Signed Windows App
+        # Artifacts are immutable, so the signed bundle needs a new name
+        if: ${{ env.HAS_SECRET == 'true' }}
+        env:
+          HAS_SECRET: ${{ secrets.AZURE_SIGNING_ENDPOINT != '' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-app-${{ matrix.arch }}-signed
+          path: app

@@ -1,4 +1,4 @@
-.PHONY: setup generate deps deps-android build-linux build-macos run-linux run-macos build-linux-app build-macos-app run-backend-standalone test lint format clean
+.PHONY: setup generate deps deps-android build-linux build-macos build-windows run-linux run-macos run-windows build-linux-app build-macos-app build-windows-app run-backend-standalone test lint format clean
 
 # Android NDK ships prebuilt toolchains for x86_64 hosts only
 # (darwin-x86_64 also serves Apple Silicon via Rosetta)
@@ -33,6 +33,11 @@ build-linux:
 build-macos:
 	cd backend && go build -buildmode=c-shared -o ../frontend/macos/libbackend.dylib ./cmd/shared/main.go
 
+# Requires Git Bash + GNU make + a MinGW gcc on PATH
+# (e.g. `choco install make mingw`); cgo cannot use MSVC
+build-windows:
+	cd backend && go build -buildmode=c-shared -o ../frontend/windows/libbackend.dll ./cmd/shared/main.go
+
 build-android-arm64:
 	@if [ -z "$(ANDROID_NDK_HOME)" ]; then echo "ANDROID_NDK_HOME is not set"; exit 1; fi
 	mkdir -p frontend/android/app/src/main/jniLibs/arm64-v8a
@@ -44,6 +49,9 @@ run-linux: build-linux
 
 run-macos: build-macos
 	cd frontend && flutter run -d macos
+
+run-windows: build-windows
+	cd frontend && flutter run -d windows
 
 # === Flutter Production Builds ===
 build-linux-app: build-linux
@@ -58,6 +66,11 @@ build-macos-app: build-macos
 	cp frontend/macos/libbackend.dylib "$$APP_PATH/Contents/Frameworks/"; \
 	codesign --force --sign - "$$APP_PATH/Contents/Frameworks/libbackend.dylib"; \
 	codesign --force --sign - "$$APP_PATH"
+
+# The DLL is bundled next to the .exe by an install rule in
+# frontend/windows/CMakeLists.txt (mirroring the Linux bundle step)
+build-windows-app: build-windows
+	cd frontend && flutter build windows
 
 build-android-apk: build-android-arm64
 	cd frontend && flutter build apk --target-platform android-arm64 --release
@@ -82,6 +95,7 @@ format:
 clean:
 	rm -f frontend/linux/libbackend.so frontend/linux/libbackend.h
 	rm -f frontend/macos/libbackend.dylib frontend/macos/libbackend.h
+	rm -f frontend/windows/libbackend.dll frontend/windows/libbackend.h
 	rm -rf frontend/lib/src/gen
 	rm -rf backend/gen
 	cd frontend && flutter clean

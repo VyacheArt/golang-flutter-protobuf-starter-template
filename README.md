@@ -5,7 +5,7 @@ It features a Flutter frontend and a Go backend running seamlessly in a single p
 
 ## Features
 - **Single-Process Architecture**: Go backend is compiled as a C-shared library and loaded directly into Flutter via FFI.
-- **ConnectRPC**: Typesafe API communication using HTTP/2 over UDS (Linux/macOS) and TCP fallback.
+- **ConnectRPC**: Typesafe API communication using HTTP/2 over UDS (Linux/macOS) and TCP fallback (always TCP on Windows).
 - **Server-Side Streaming**: Ready-to-use example of real-time server streaming.
 - **Nix Flake**: Reproducible development environment.
 
@@ -29,7 +29,8 @@ It automatically replaces all configurations, moves Android activities to the co
 
 - `make run-linux` - Build shared library and run Flutter on Linux
 - `make run-macos` - Build shared library and run Flutter on macOS
-- `make build-linux-app` / `make build-macos-app` - Build production release bundle
+- `make run-windows` - Build shared library and run Flutter on Windows (requires Git Bash + GNU make + MinGW gcc, e.g. `choco install make mingw` — cgo cannot use MSVC)
+- `make build-linux-app` / `make build-macos-app` / `make build-windows-app` - Build production release bundle
 - `make run-backend-standalone` - Run the Go backend natively on TCP (127.0.0.1:8080) for API testing
 - `make generate` - Regenerate protobuf definitions
 - `make deps` - Fetch Go/Flutter dependencies (`make deps-android` additionally patches the Flutter Gradle plugin, required before Android builds on NixOS)
@@ -61,10 +62,24 @@ CI builds unsigned artifacts by default. Add repository secrets to enable signin
 
 Signed + notarized macOS builds pass Gatekeeper on download. Unsigned (ad-hoc) builds require `xattr -cr MyApp.app` after unzipping.
 
+**Windows** (requires an [Azure Artifact Signing](https://learn.microsoft.com/en-us/azure/artifact-signing/overview) account, formerly Trusted Signing — the Basic tier is enough; skipped when `AZURE_SIGNING_ENDPOINT` is empty):
+- `AZURE_SIGNING_ENDPOINT` — e.g. `https://weu.codesigning.azure.net`
+- `AZURE_SIGNING_ACCOUNT`, `AZURE_SIGNING_PROFILE` — signing account and certificate profile names
+- `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` — Entra app registration with the "Artifact Signing Certificate Profile Signer" role
+
+Signed Windows builds are uploaded as separate `windows-app-<arch>-signed` artifacts. To switch to OIDC instead of a client secret, add an `azure/login` step (with `permissions: id-token: write`) to the `sign-windows` job and drop the three `azure-*` inputs. Note: the `windows-11-arm` runner is free for public repositories; in private repositories it consumes standard Actions minutes (2x Windows multiplier).
+
 ## TCP vs UDS
 
 By default, the template uses UDS (Unix Domain Sockets) in production and development for maximum performance.
+On Windows, where `dart:io` does not support UDS, the app always uses TCP on `127.0.0.1` with a random (ephemeral) port, so multiple instances never collide.
+
 You can force TCP transport during development:
+```bash
+flutter run --dart-define=APP_USE_TCP=true
+```
+
+Without an explicit address the embedded backend picks an ephemeral port. Set `APP_TCP_ADDRESS` to connect to an externally running backend instead (e.g. `make run-backend-standalone` listens on `127.0.0.1:8080`):
 ```bash
 flutter run --dart-define=APP_USE_TCP=true --dart-define=APP_TCP_ADDRESS=127.0.0.1:8080
 ```

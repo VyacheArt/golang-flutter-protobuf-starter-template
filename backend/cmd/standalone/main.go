@@ -13,7 +13,7 @@ func main() {
 	address := "127.0.0.1:8080"
 	log.Printf("Starting standalone ConnectRPC server on TCP %s", address)
 	
-	if err := runner.StartTCPServer(address); err != nil {
+	if _, err := runner.StartTCPServer(address); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 

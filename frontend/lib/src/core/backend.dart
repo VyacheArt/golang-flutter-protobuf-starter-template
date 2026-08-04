@@ -16,20 +16,35 @@ class Backend {
   /// This abstracts away the socket creation and FFI bindings from the main app.
   static Future<Backend> init() async {
     const useTcpEnv = String.fromEnvironment('APP_USE_TCP', defaultValue: '');
-    final useTcp = useTcpEnv == 'true' || Platform.environment['APP_USE_TCP'] == 'true';
-    
+    // Windows has no usable UDS: dart:io throws on InternetAddressType.unix,
+    // while Go's net.Listen("unix") deceptively succeeds, so the app would
+    // look healthy but fail on the first RPC. Always use TCP there.
+    final useTcp = Platform.isWindows ||
+        useTcpEnv == 'true' ||
+        Platform.environment['APP_USE_TCP'] == 'true';
+
     const tcpAddressEnv = String.fromEnvironment('APP_TCP_ADDRESS', defaultValue: '');
-    final tcpAddress = tcpAddressEnv.isNotEmpty 
-        ? tcpAddressEnv 
-        : (Platform.environment['APP_TCP_ADDRESS'] ?? '127.0.0.1:8080');
+    final envTcpAddress = tcpAddressEnv.isNotEmpty
+        ? tcpAddressEnv
+        : (Platform.environment['APP_TCP_ADDRESS'] ?? '');
+    final explicitTcpAddress = envTcpAddress.isNotEmpty ? envTcpAddress : null;
 
     final runner = BackendRunner();
 
     if (useTcp) {
+      // Without an explicit APP_TCP_ADDRESS the embedded backend picks an
+      // ephemeral port, so multiple app instances never collide.
+      var tcpAddress = explicitTcpAddress ?? '127.0.0.1:0';
       try {
         runner.startTcp(tcpAddress);
+        if (explicitTcpAddress == null) {
+          tcpAddress = '127.0.0.1:${runner.getBoundTcpPort()}';
+        }
         debugPrint('[Frontend] FFI Backend started natively on TCP: $tcpAddress');
       } catch (e) {
+        // An externally started backend (make run-backend-standalone) listens
+        // on the standalone default unless APP_TCP_ADDRESS says otherwise.
+        tcpAddress = explicitTcpAddress ?? '127.0.0.1:8080';
         debugPrint('[Frontend] Could not start FFI TCP backend, assuming it is running externally: $e');
       }
 

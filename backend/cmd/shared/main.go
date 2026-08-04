@@ -16,11 +16,16 @@ func StartUDSServer(socketPath *C.char) *C.char {
 
 //export StartTCPServer
 func StartTCPServer(address *C.char) *C.char {
-	err := runner.StartTCPServer(C.GoString(address))
+	_, err := runner.StartTCPServer(C.GoString(address))
 	if err != nil {
 		return C.CString(err.Error())
 	}
 	return nil
+}
+
+//export GetBoundTCPPort
+func GetBoundTCPPort() C.int {
+	return C.int(runner.BoundTCPPort())
 }
 
 //export StopServer

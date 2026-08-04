@@ -11,6 +11,9 @@ typedef StartTCPServerDart = Pointer<Utf8> Function(Pointer<Utf8> address);
 typedef StopServerC = Pointer<Utf8> Function();
 typedef StopServerDart = Pointer<Utf8> Function();
 
+typedef GetBoundTCPPortC = Int32 Function();
+typedef GetBoundTCPPortDart = int Function();
+
 /// BackendRunner manages the lifecycle of the Go FFI shared library.
 /// It loads the library on initialization and provides methods to start/stop the UDS and TCP servers.
 class BackendRunner {
@@ -18,6 +21,7 @@ class BackendRunner {
   late final StartUDSServerDart _startUds;
   late final StartTCPServerDart _startTcp;
   late final StopServerDart _stopServer;
+  late final GetBoundTCPPortDart _getBoundTcpPort;
 
   BackendRunner() {
     String libName;
@@ -37,6 +41,7 @@ class BackendRunner {
     _startUds = _lib.lookupFunction<StartUDSServerC, StartUDSServerDart>('StartUDSServer');
     _startTcp = _lib.lookupFunction<StartTCPServerC, StartTCPServerDart>('StartTCPServer');
     _stopServer = _lib.lookupFunction<StopServerC, StopServerDart>('StopServer');
+    _getBoundTcpPort = _lib.lookupFunction<GetBoundTCPPortC, GetBoundTCPPortDart>('GetBoundTCPPort');
   }
 
   DynamicLibrary _openLibrary(String name) {
@@ -91,6 +96,10 @@ class BackendRunner {
       throw Exception('Failed to start TCP server: $err');
     }
   }
+
+  /// Returns the actual port the embedded TCP server is listening on
+  /// (relevant when it was started on an ephemeral port), or 0 if it is not running.
+  int getBoundTcpPort() => _getBoundTcpPort();
 
   void stop() {
     final errPtr = _stopServer();

@@ -15,6 +15,11 @@ import (
 // a singleton server instance is acceptable here.
 var currentServer *http.Server
 
+// boundTCPPort holds the actual port of the running TCP listener. The frontend
+// requests an ephemeral port ("127.0.0.1:0") by default, so it needs a way to
+// discover which port the OS assigned.
+var boundTCPPort int
+
 // loggingMiddleware intercepts incoming HTTP requests to log their method, path, and client address.
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -59,6 +64,7 @@ func startServerOnListener(listener net.Listener) {
 func StopServer() error {
 	if currentServer != nil {
 		log.Println("[Backend] Stopping server...")
+		boundTCPPort = 0
 		return currentServer.Close()
 	}
 	return nil
@@ -78,13 +84,22 @@ func StartUDSServer(socketPath string) error {
 	return nil
 }
 
-// StartTCPServer initializes the HTTP/2 server over standard TCP.
-func StartTCPServer(address string) error {
+// StartTCPServer initializes the HTTP/2 server over standard TCP and returns
+// the actual port it is listening on (relevant when the address requests an
+// ephemeral port, e.g. "127.0.0.1:0").
+func StartTCPServer(address string) (int, error) {
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	log.Printf("[Backend] Listening on TCP: %s", address)
+	boundTCPPort = listener.Addr().(*net.TCPAddr).Port
+	log.Printf("[Backend] Listening on TCP: %s", listener.Addr())
 	startServerOnListener(listener)
-	return nil
+	return boundTCPPort, nil
+}
+
+// BoundTCPPort returns the actual port of the running TCP listener,
+// or 0 if no TCP server is running.
+func BoundTCPPort() int {
+	return boundTCPPort
 }
