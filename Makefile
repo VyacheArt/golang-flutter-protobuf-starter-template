@@ -1,10 +1,19 @@
-.PHONY: setup generate deps build-linux build-macos run-linux run-macos build-linux-app build-macos-app run-backend-standalone test lint format clean
+.PHONY: setup generate deps deps-android build-linux build-macos run-linux run-macos build-linux-app build-macos-app run-backend-standalone test lint format clean
+
+# Android NDK ships prebuilt toolchains for x86_64 hosts only
+# (darwin-x86_64 also serves Apple Silicon via Rosetta)
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+NDK_HOST_TAG := darwin-x86_64
+else
+NDK_HOST_TAG := linux-x86_64
+endif
 
 # === Initialization ===
 setup:
 	go run scripts/setup.go
 	make generate
-	make deps
+	make deps-android
 
 # === Code Generation ===
 generate:
@@ -13,6 +22,8 @@ generate:
 deps:
 	cd backend && go mod tidy
 	cd frontend && flutter pub get
+
+deps-android: deps
 	cd frontend && ./patch-flutter-gradle.sh
 
 # === C-Shared Library Builds ===
@@ -25,7 +36,7 @@ build-macos:
 build-android-arm64:
 	@if [ -z "$(ANDROID_NDK_HOME)" ]; then echo "ANDROID_NDK_HOME is not set"; exit 1; fi
 	mkdir -p frontend/android/app/src/main/jniLibs/arm64-v8a
-	cd backend && CGO_ENABLED=1 GOOS=android GOARCH=arm64 CC="$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang" CXX="$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang++" go build -buildmode=c-shared -o ../frontend/android/app/src/main/jniLibs/arm64-v8a/libbackend.so ./cmd/shared/main.go
+	cd backend && CGO_ENABLED=1 GOOS=android GOARCH=arm64 CC="$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST_TAG)/bin/aarch64-linux-android30-clang" CXX="$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST_TAG)/bin/aarch64-linux-android30-clang++" go build -buildmode=c-shared -o ../frontend/android/app/src/main/jniLibs/arm64-v8a/libbackend.so ./cmd/shared/main.go
 
 # === Flutter Development Runs ===
 run-linux: build-linux

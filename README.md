@@ -32,7 +32,13 @@ It automatically replaces all configurations, moves Android activities to the co
 - `make build-linux-app` / `make build-macos-app` - Build production release bundle
 - `make run-backend-standalone` - Run the Go backend natively on TCP (127.0.0.1:8080) for API testing
 - `make generate` - Regenerate protobuf definitions
+- `make deps` - Fetch Go/Flutter dependencies (`make deps-android` additionally patches the Flutter Gradle plugin, required before Android builds on NixOS)
 - `make test`, `make lint`, `make format` - Code quality tools
+
+## Nix Development Shells
+
+- `nix develop` - Full environment: Go, Flutter, Buf, JDK 17, Android SDK/NDK
+- `nix develop .#desktop` - Slim environment without the Android toolchain; used by CI for desktop builds and quality checks
 
 ## TCP vs UDS
 

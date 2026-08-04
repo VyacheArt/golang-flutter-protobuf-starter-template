@@ -5,18 +5,82 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Setup Nix cache
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-desktop-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.nix', 'flake.lock') }}
+          restore-prefixes-first-match: nix-desktop-${{ runner.os }}-${{ runner.arch }}-
+          gc-max-store-size-linux: 5G
+          purge: true
+          purge-prefixes: nix-desktop-${{ runner.os }}-${{ runner.arch }}-
+          purge-created: 0
+          purge-primary-key: never
+
+      - name: Fetch Dependencies
+        run: nix develop .#desktop -c make deps
+
+      - name: Lint
+        run: nix develop .#desktop -c make lint
+
+      - name: Test
+        run: nix develop .#desktop -c make test
+
   build-linux:
     strategy:
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Setup Nix cache
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-desktop-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.nix', 'flake.lock') }}
+          restore-prefixes-first-match: nix-desktop-${{ runner.os }}-${{ runner.arch }}-
+          gc-max-store-size-linux: 5G
+          purge: true
+          purge-prefixes: nix-desktop-${{ runner.os }}-${{ runner.arch }}-
+          purge-created: 0
+          purge-primary-key: never
+
+      - name: Fetch Dependencies
+        run: nix develop .#desktop -c make deps
+
+      - name: Build Linux Desktop
+        run: nix develop .#desktop -c make build-linux-app
+
+      - name: Upload Linux App
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-app-${{ matrix.os }}
+          path: frontend/build/linux/*/release/bundle/
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
 
       - name: Free Disk Space
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@v1.3.1
         with:
           tool-cache: false
           android: true
@@ -27,33 +91,32 @@ jobs:
           swap-storage: true
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v30
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
+        uses: cachix/install-nix-action@v31
 
       - name: Setup Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@v8
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-android-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.nix', 'flake.lock') }}
+          restore-prefixes-first-match: nix-android-${{ runner.os }}-${{ runner.arch }}-
+          gc-max-store-size-linux: 12G
+          purge: true
+          purge-prefixes: nix-android-${{ runner.os }}-${{ runner.arch }}-
+          purge-created: 0
+          purge-primary-key: never
 
       - name: Fetch Dependencies
-        run: nix develop -c make deps
-
-      - name: Build Linux Desktop
-        run: nix develop -c make build-linux-app
-
-      - name: Upload Linux App
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-app-${{ matrix.os }}
-          path: frontend/build/linux/*/release/bundle/
+        run: nix develop -c make deps-android
 
       - name: Setup Android Keystore
+        # The secrets context is not available in step-level `if`, so the
+        # presence check goes through an env var instead
+        if: ${{ env.HAS_SECRET == 'true' }}
         env:
           HAS_SECRET: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
-        if: ${{ env.HAS_SECRET == 'true' && matrix.os == 'ubuntu-latest' }}
         run: |
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > frontend/android/app/release.jks
           cat <<EOF > frontend/android/key.properties
@@ -64,40 +127,44 @@ jobs:
           EOF
 
       - name: Build Android APK
-        if: matrix.os == 'ubuntu-latest'
         run: nix develop -c make build-android-apk
 
       - name: Upload Android APK
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: app-release.apk
+          name: android-apk
           path: frontend/build/app/outputs/flutter-apk/app-release.apk
 
   # build-macos:
   #   strategy:
   #     matrix:
-  #       os: [macos-13, macos-latest]
+  #       os: [macos-15-intel, macos-latest]
   #   runs-on: ${{ matrix.os }}
   #   steps:
-  #     - uses: actions/checkout@v4
-
+  #     - uses: actions/checkout@v7
+  #
   #     - name: Install Nix
-  #       uses: cachix/install-nix-action@v30
-  #       with:
-  #         nix_path: nixpkgs=channel:nixos-unstable
-
+  #       uses: cachix/install-nix-action@v31
+  #
   #     - name: Setup Nix cache
-  #       uses: DeterminateSystems/magic-nix-cache-action@v8
-
+  #       uses: nix-community/cache-nix-action@v7
+  #       with:
+  #         primary-key: nix-desktop-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('flake.nix', 'flake.lock') }}
+  #         restore-prefixes-first-match: nix-desktop-${{ runner.os }}-${{ runner.arch }}-
+  #         gc-max-store-size-macos: 5G
+  #         purge: true
+  #         purge-prefixes: nix-desktop-${{ runner.os }}-${{ runner.arch }}-
+  #         purge-created: 0
+  #         purge-primary-key: never
+  #
   #     - name: Fetch Dependencies
-  #       run: nix develop -c make deps
-
+  #       run: nix develop .#desktop -c make deps
+  #
   #     - name: Build macOS Desktop
-  #       run: nix develop -c make build-macos-app
-
+  #       run: nix develop .#desktop -c make build-macos-app
+  #
   #     - name: Upload macOS App
-  #       uses: actions/upload-artifact@v4
+  #       uses: actions/upload-artifact@v7
   #       with:
   #         name: macos-app-${{ matrix.os }}
   #         path: frontend/build/macos/Build/Products/Release/

@@ -35,20 +35,28 @@
           useGoogleTVAddOns = false;
         };
         androidSdk = androidComposition.androidsdk;
+        desktopTools = with pkgs; [
+          go
+          flutter
+          buf
+          protobuf
+          protoc-gen-go
+          go-tools
+        ];
       in
       {
+        # Slim shell without Android SDK/NDK — used by CI for desktop builds,
+        # quality checks, and as the base for macOS runners.
+        devShells.desktop = pkgs.mkShell {
+          buildInputs = desktopTools;
+        };
+
         devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            go
-            flutter
-            buf
-            protobuf
-            protoc-gen-go
-            go-tools
+          buildInputs = desktopTools ++ [
             androidSdk
-            jdk17
+            pkgs.jdk17
           ];
-          
+
           ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
           ANDROID_NDK_HOME = "${androidSdk}/libexec/android-sdk/ndk/26.1.10909125";
           ANDROID_NDK_VERSION = "26.1.10909125";
