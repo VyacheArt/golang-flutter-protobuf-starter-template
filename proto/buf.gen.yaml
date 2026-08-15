@@ -1,12 +1,18 @@
-version: v1
+version: v2
+# Remote plugin versions are pinned for reproducible codegen.
+# Keep them in sync with the runtime libraries:
+#   - protocolbuffers/go  <-> google.golang.org/protobuf in backend/go.mod
+#   - connectrpc/go       <-> connectrpc.com/connect in backend/go.mod
+#   - protocolbuffers/dart<-> protobuf in frontend/pubspec.yaml (22.x targets protobuf 4.x)
+#   - connectrpc/dart     <-> connectrpc in frontend/pubspec.yaml
 plugins:
-  - plugin: buf.build/protocolbuffers/go
+  - remote: buf.build/protocolbuffers/go:v1.36.12
     out: ../backend/gen
     opt: paths=source_relative
-  - plugin: buf.build/connectrpc/go
+  - remote: buf.build/connectrpc/go:v1.20.0
     out: ../backend/gen
     opt: paths=source_relative
-  - plugin: buf.build/protocolbuffers/dart
+  - remote: buf.build/protocolbuffers/dart:v22.5.0
     out: ../frontend/lib/src/gen
-  - plugin: buf.build/connectrpc/dart
+  - remote: buf.build/connectrpc/dart:v1.0.0
     out: ../frontend/lib/src/gen

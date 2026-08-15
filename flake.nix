@@ -21,23 +21,22 @@
             android_sdk.accept_license = true;
           };
         };
+        # Must match the Flutter Gradle plugin's default ndkVersion
+        # (FlutterExtension.kt in flutter_tools)
+        ndkVersion = "28.2.13676358";
+        # Must match AGP's default build-tools version; the aapt2 override in
+        # the shellHook below points into the same version
+        buildToolsVersion = "36.0.0";
         androidComposition = pkgs.androidenv.composeAndroidPackages {
-          cmdLineToolsVersion = "8.0";
-          toolsVersion = "26.1.1";
-          platformToolsVersion = "37.0.0";
-          buildToolsVersions = [ "34.0.0" "35.0.0" "36.0.0" ];
-          includeEmulator = false;
-          emulatorVersion = "34.1.9";
-          platformVersions = [ "34" "35" "36" ];
-          includeSources = false;
-          includeSystemImages = false;
-          systemImageTypes = [ "google_apis_playstore" ];
-          abiVersions = [ "arm64-v8a" ];
-          cmakeVersions = [ "3.22.1" ];
+          # Components not listed here (cmdline-tools, platform-tools, ...)
+          # default to the latest version available in the pinned nixpkgs,
+          # so they only move together with flake.lock updates
+          buildToolsVersions = [ buildToolsVersion ];
+          # compileSdk/targetSdk of the app
+          platformVersions = [ "36" ];
+          includeCmake = false;
           includeNDK = true;
-          ndkVersions = ["26.1.10909125"];
-          useGoogleAPIs = false;
-          useGoogleTVAddOns = false;
+          ndkVersions = [ ndkVersion ];
         };
         androidSdk = androidComposition.androidsdk;
         desktopTools = with pkgs; [
@@ -63,8 +62,8 @@
           ];
 
           ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
-          ANDROID_NDK_HOME = "${androidSdk}/libexec/android-sdk/ndk/26.1.10909125";
-          ANDROID_NDK_VERSION = "26.1.10909125";
+          ANDROID_NDK_HOME = "${androidSdk}/libexec/android-sdk/ndk/${ndkVersion}";
+          ANDROID_NDK_VERSION = ndkVersion;
           JAVA_HOME = "${pkgs.jdk17}/lib/openjdk";
           
           shellHook = ''
@@ -73,9 +72,9 @@
             # Ensure AAPT2 override is set in global Gradle properties for NixOS
             mkdir -p ~/.gradle
             if ! grep -q "android.aapt2FromMavenOverride" ~/.gradle/gradle.properties 2>/dev/null; then
-              echo "android.aapt2FromMavenOverride=$ANDROID_HOME/build-tools/36.0.0/aapt2" >> ~/.gradle/gradle.properties
+              echo "android.aapt2FromMavenOverride=$ANDROID_HOME/build-tools/${buildToolsVersion}/aapt2" >> ~/.gradle/gradle.properties
             else
-              sed -i "s|android.aapt2FromMavenOverride=.*|android.aapt2FromMavenOverride=$ANDROID_HOME/build-tools/36.0.0/aapt2|" ~/.gradle/gradle.properties
+              sed -i "s|android.aapt2FromMavenOverride=.*|android.aapt2FromMavenOverride=$ANDROID_HOME/build-tools/${buildToolsVersion}/aapt2|" ~/.gradle/gradle.properties
             fi
           '';
         };

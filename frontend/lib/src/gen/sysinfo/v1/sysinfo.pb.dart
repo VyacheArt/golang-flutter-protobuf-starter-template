@@ -8,7 +8,7 @@
 // ignore_for_file: constant_identifier_names
 // ignore_for_file: curly_braces_in_flow_control_structures
 // ignore_for_file: deprecated_member_use_from_same_package, library_prefixes
-// ignore_for_file: non_constant_identifier_names, prefer_relative_imports
+// ignore_for_file: non_constant_identifier_names
 
 import 'dart:async' as $async;
 import 'dart:core' as $core;
@@ -37,7 +37,8 @@ class GetSystemInfoRequest extends $pb.GeneratedMessage {
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  GetSystemInfoRequest clone() => deepCopy();
+  GetSystemInfoRequest clone() =>
+      GetSystemInfoRequest()..mergeFromMessage(this);
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   GetSystemInfoRequest copyWith(void Function(GetSystemInfoRequest) updates) =>
       super.copyWith((message) => updates(message as GetSystemInfoRequest))
@@ -50,6 +51,8 @@ class GetSystemInfoRequest extends $pb.GeneratedMessage {
   static GetSystemInfoRequest create() => GetSystemInfoRequest._();
   @$core.override
   GetSystemInfoRequest createEmptyInstance() => create();
+  static $pb.PbList<GetSystemInfoRequest> createRepeated() =>
+      $pb.PbList<GetSystemInfoRequest>();
   @$core.pragma('dart2js:noInline')
   static GetSystemInfoRequest getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<GetSystemInfoRequest>(create);
@@ -88,7 +91,8 @@ class GetSystemInfoResponse extends $pb.GeneratedMessage {
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  GetSystemInfoResponse clone() => deepCopy();
+  GetSystemInfoResponse clone() =>
+      GetSystemInfoResponse()..mergeFromMessage(this);
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   GetSystemInfoResponse copyWith(
           void Function(GetSystemInfoResponse) updates) =>
@@ -102,6 +106,8 @@ class GetSystemInfoResponse extends $pb.GeneratedMessage {
   static GetSystemInfoResponse create() => GetSystemInfoResponse._();
   @$core.override
   GetSystemInfoResponse createEmptyInstance() => create();
+  static $pb.PbList<GetSystemInfoResponse> createRepeated() =>
+      $pb.PbList<GetSystemInfoResponse>();
   @$core.pragma('dart2js:noInline')
   static GetSystemInfoResponse getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<GetSystemInfoResponse>(create);
@@ -154,7 +160,7 @@ class WatchMetricsRequest extends $pb.GeneratedMessage {
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  WatchMetricsRequest clone() => deepCopy();
+  WatchMetricsRequest clone() => WatchMetricsRequest()..mergeFromMessage(this);
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   WatchMetricsRequest copyWith(void Function(WatchMetricsRequest) updates) =>
       super.copyWith((message) => updates(message as WatchMetricsRequest))
@@ -167,6 +173,8 @@ class WatchMetricsRequest extends $pb.GeneratedMessage {
   static WatchMetricsRequest create() => WatchMetricsRequest._();
   @$core.override
   WatchMetricsRequest createEmptyInstance() => create();
+  static $pb.PbList<WatchMetricsRequest> createRepeated() =>
+      $pb.PbList<WatchMetricsRequest>();
   @$core.pragma('dart2js:noInline')
   static WatchMetricsRequest getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<WatchMetricsRequest>(create);
@@ -206,7 +214,8 @@ class WatchMetricsResponse extends $pb.GeneratedMessage {
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  WatchMetricsResponse clone() => deepCopy();
+  WatchMetricsResponse clone() =>
+      WatchMetricsResponse()..mergeFromMessage(this);
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   WatchMetricsResponse copyWith(void Function(WatchMetricsResponse) updates) =>
       super.copyWith((message) => updates(message as WatchMetricsResponse))
@@ -219,6 +228,8 @@ class WatchMetricsResponse extends $pb.GeneratedMessage {
   static WatchMetricsResponse create() => WatchMetricsResponse._();
   @$core.override
   WatchMetricsResponse createEmptyInstance() => create();
+  static $pb.PbList<WatchMetricsResponse> createRepeated() =>
+      $pb.PbList<WatchMetricsResponse>();
   @$core.pragma('dart2js:noInline')
   static WatchMetricsResponse getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<WatchMetricsResponse>(create);

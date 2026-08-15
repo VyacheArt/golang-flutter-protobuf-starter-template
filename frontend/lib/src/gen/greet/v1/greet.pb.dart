@@ -8,7 +8,7 @@
 // ignore_for_file: constant_identifier_names
 // ignore_for_file: curly_braces_in_flow_control_structures
 // ignore_for_file: deprecated_member_use_from_same_package, library_prefixes
-// ignore_for_file: non_constant_identifier_names, prefer_relative_imports
+// ignore_for_file: non_constant_identifier_names
 
 import 'dart:async' as $async;
 import 'dart:core' as $core;
@@ -43,7 +43,7 @@ class GreetRequest extends $pb.GeneratedMessage {
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  GreetRequest clone() => deepCopy();
+  GreetRequest clone() => GreetRequest()..mergeFromMessage(this);
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   GreetRequest copyWith(void Function(GreetRequest) updates) =>
       super.copyWith((message) => updates(message as GreetRequest))
@@ -56,6 +56,8 @@ class GreetRequest extends $pb.GeneratedMessage {
   static GreetRequest create() => GreetRequest._();
   @$core.override
   GreetRequest createEmptyInstance() => create();
+  static $pb.PbList<GreetRequest> createRepeated() =>
+      $pb.PbList<GreetRequest>();
   @$core.pragma('dart2js:noInline')
   static GreetRequest getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<GreetRequest>(create);
@@ -97,7 +99,7 @@ class GreetResponse extends $pb.GeneratedMessage {
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  GreetResponse clone() => deepCopy();
+  GreetResponse clone() => GreetResponse()..mergeFromMessage(this);
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
   GreetResponse copyWith(void Function(GreetResponse) updates) =>
       super.copyWith((message) => updates(message as GreetResponse))
@@ -110,6 +112,8 @@ class GreetResponse extends $pb.GeneratedMessage {
   static GreetResponse create() => GreetResponse._();
   @$core.override
   GreetResponse createEmptyInstance() => create();
+  static $pb.PbList<GreetResponse> createRepeated() =>
+      $pb.PbList<GreetResponse>();
   @$core.pragma('dart2js:noInline')
   static GreetResponse getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<GreetResponse>(create);

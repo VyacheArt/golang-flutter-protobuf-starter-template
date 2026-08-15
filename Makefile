@@ -9,6 +9,11 @@ else
 NDK_HOST_TAG := linux-x86_64
 endif
 
+# Oldest Android API level the Go library links against. Must not exceed the
+# app's minSdk (flutter.minSdkVersion, currently 24), or the library would
+# fail to load on the oldest devices the app itself still supports.
+ANDROID_API := 24
+
 # === Initialization ===
 setup:
 	go run scripts/setup.go
@@ -41,7 +46,7 @@ build-windows:
 build-android-arm64:
 	@if [ -z "$(ANDROID_NDK_HOME)" ]; then echo "ANDROID_NDK_HOME is not set"; exit 1; fi
 	mkdir -p frontend/android/app/src/main/jniLibs/arm64-v8a
-	cd backend && CGO_ENABLED=1 GOOS=android GOARCH=arm64 CC="$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST_TAG)/bin/aarch64-linux-android30-clang" CXX="$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST_TAG)/bin/aarch64-linux-android30-clang++" go build -buildmode=c-shared -o ../frontend/android/app/src/main/jniLibs/arm64-v8a/libbackend.so ./cmd/shared/main.go
+	cd backend && CGO_ENABLED=1 GOOS=android GOARCH=arm64 CC="$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST_TAG)/bin/aarch64-linux-android$(ANDROID_API)-clang" CXX="$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(NDK_HOST_TAG)/bin/aarch64-linux-android$(ANDROID_API)-clang++" go build -buildmode=c-shared -o ../frontend/android/app/src/main/jniLibs/arm64-v8a/libbackend.so ./cmd/shared/main.go
 
 # === Flutter Development Runs ===
 run-linux: build-linux

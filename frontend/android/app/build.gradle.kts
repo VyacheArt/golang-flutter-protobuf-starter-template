@@ -18,7 +18,8 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        // `make setup` replaces this template Application ID (and the
+        // namespace above) with the one you choose during setup
         applicationId = "com.example.frontend"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
