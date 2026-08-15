@@ -1,13 +1,26 @@
 # Golang + Flutter + Protobuf Starter Template
 
+![GitHub License](https://img.shields.io/github/license/VyacheArt/golang-flutter-protobuf-starter-template)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/VyacheArt/golang-flutter-protobuf-starter-template/ci.yml)
+
+
+![Screenshot_20260816_005204.png](screenshots/Screenshot_20260816_005204.png)
+
 A starter template for cross-platform applications.
 It features a Flutter frontend and a Go backend running seamlessly in a single process via FFI, communicating over a Unix Domain Socket (UDS) with [ConnectRPC](https://connectrpc.com/) (protobuf).
 
-## Features
+## ✔️ Features
 - **Single-Process Architecture**: Go backend is compiled as a C-shared library and loaded directly into Flutter via FFI.
+- **Cross-platform**: Ready-to-use template targeting macOS, Windows, Linux, and Android, including GitHub Actions support.
+- **Cross-architecture** (!!!): Isn't ARM the default in 2026? I think it is, so both amd64 and arm64 are built for macOS, Windows and Linux. 
 - **ConnectRPC**: Typesafe API communication using HTTP/2 (h2c) over UDS (Linux/macOS) and TCP fallback (always TCP on Windows).
-- **Streaming RPCs**: Ready-to-use examples of server-side streaming (live runtime metrics) and full-duplex bidirectional streaming (echo chat). The Dart client uses `package:connectrpc/http2.dart`, since bidirectional streaming requires HTTP/2 end-to-end.
+- **Streaming RPCs**: Ready-to-use examples of server-side streaming (live runtime metrics) and **full-duplex bidirectional streaming** (echo chat). The Dart client uses `package:connectrpc/http2.dart`, since bidirectional streaming requires HTTP/2 end-to-end.
 - **Nix Flake**: Reproducible development environment.
+
+## ❌ What is not implemented (yet)
+
+- **Security**: there is no TCP/encryption/token validation. I believe this is quite specific part for every project, so it's up to you.
+- **iOS support**: Not yet implemented due to deployment complexities. However, the code _should_ work without modifications, since iOS natively supports UDS.
 
 ## 🚀 Getting Started (Personalizing the Template)
 
@@ -83,3 +96,7 @@ Without an explicit address the embedded backend picks an ephemeral port. Set `A
 ```bash
 flutter run --dart-define=APP_USE_TCP=true --dart-define=APP_TCP_ADDRESS=127.0.0.1:8080
 ```
+
+## License
+
+This template is released under the [MIT License](https://opensource.org/licenses/MIT).
