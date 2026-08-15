@@ -34,7 +34,10 @@
           buildToolsVersions = [ buildToolsVersion ];
           # compileSdk/targetSdk of the app
           platformVersions = [ "36" ];
-          includeCmake = false;
+          # The Flutter Gradle plugin drives an externalNativeBuild, and AGP
+          # requests exactly this CMake version. It must be preinstalled:
+          # AGP cannot download it into the read-only /nix/store SDK
+          cmakeVersions = [ "3.22.1" ];
           includeNDK = true;
           ndkVersions = [ ndkVersion ];
         };
