@@ -23,10 +23,14 @@ export 'greet.pb.dart';
 abstract class GreetServiceBase extends $pb.GeneratedService {
   $async.Future<$0.GreetResponse> greet(
       $pb.ServerContext ctx, $0.GreetRequest request);
+  $async.Future<$0.GreetResponse> greetStream(
+      $pb.ServerContext ctx, $0.GreetRequest request);
 
   $pb.GeneratedMessage createRequest($core.String methodName) {
     switch (methodName) {
       case 'Greet':
+        return $0.GreetRequest();
+      case 'GreetStream':
         return $0.GreetRequest();
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
@@ -38,6 +42,8 @@ abstract class GreetServiceBase extends $pb.GeneratedService {
     switch (methodName) {
       case 'Greet':
         return greet(ctx, request as $0.GreetRequest);
+      case 'GreetStream':
+        return greetStream(ctx, request as $0.GreetRequest);
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }

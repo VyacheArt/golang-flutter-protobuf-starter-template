@@ -5,8 +5,8 @@ It features a Flutter frontend and a Go backend running seamlessly in a single p
 
 ## Features
 - **Single-Process Architecture**: Go backend is compiled as a C-shared library and loaded directly into Flutter via FFI.
-- **ConnectRPC**: Typesafe API communication using HTTP/2 over UDS (Linux/macOS) and TCP fallback (always TCP on Windows).
-- **Server-Side Streaming**: Ready-to-use example of real-time server streaming.
+- **ConnectRPC**: Typesafe API communication using HTTP/2 (h2c) over UDS (Linux/macOS) and TCP fallback (always TCP on Windows).
+- **Streaming RPCs**: Ready-to-use examples of server-side streaming (live runtime metrics) and full-duplex bidirectional streaming (echo chat). The Dart client uses `package:connectrpc/http2.dart`, since bidirectional streaming requires HTTP/2 end-to-end.
 - **Nix Flake**: Reproducible development environment.
 
 ## 🚀 Getting Started (Personalizing the Template)

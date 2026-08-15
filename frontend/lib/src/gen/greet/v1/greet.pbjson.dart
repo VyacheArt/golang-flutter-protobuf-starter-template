@@ -47,6 +47,14 @@ const $core.Map<$core.String, $core.dynamic> GreetServiceBase$json = {
       '3': '.greet.v1.GreetResponse',
       '4': {}
     },
+    {
+      '1': 'GreetStream',
+      '2': '.greet.v1.GreetRequest',
+      '3': '.greet.v1.GreetResponse',
+      '4': {},
+      '5': true,
+      '6': true
+    },
   ],
 };
 
@@ -60,4 +68,5 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
 /// Descriptor for `GreetService`. Decode as a `google.protobuf.ServiceDescriptorProto`.
 final $typed_data.Uint8List greetServiceDescriptor = $convert.base64Decode(
     'CgxHcmVldFNlcnZpY2USOgoFR3JlZXQSFi5ncmVldC52MS5HcmVldFJlcXVlc3QaFy5ncmVldC'
-    '52MS5HcmVldFJlc3BvbnNlIgA=');
+    '52MS5HcmVldFJlc3BvbnNlIgASRAoLR3JlZXRTdHJlYW0SFi5ncmVldC52MS5HcmVldFJlcXVl'
+    'c3QaFy5ncmVldC52MS5HcmVldFJlc3BvbnNlIgAoATAB');

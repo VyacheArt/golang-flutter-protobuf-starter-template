@@ -2,10 +2,10 @@ package server
 
 import (
 	"net/http"
-	
+
 	"template/backend/gen/greet/v1/greetv1connect"
 	"template/backend/internal/greet"
-	
+
 	"template/backend/gen/sysinfo/v1/sysinfov1connect"
 	"template/backend/internal/sysinfo"
 )

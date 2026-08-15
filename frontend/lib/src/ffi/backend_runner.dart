@@ -38,10 +38,19 @@ class BackendRunner {
     }
 
     _lib = _openLibrary(libName);
-    _startUds = _lib.lookupFunction<StartUDSServerC, StartUDSServerDart>('StartUDSServer');
-    _startTcp = _lib.lookupFunction<StartTCPServerC, StartTCPServerDart>('StartTCPServer');
-    _stopServer = _lib.lookupFunction<StopServerC, StopServerDart>('StopServer');
-    _getBoundTcpPort = _lib.lookupFunction<GetBoundTCPPortC, GetBoundTCPPortDart>('GetBoundTCPPort');
+    _startUds = _lib.lookupFunction<StartUDSServerC, StartUDSServerDart>(
+      'StartUDSServer',
+    );
+    _startTcp = _lib.lookupFunction<StartTCPServerC, StartTCPServerDart>(
+      'StartTCPServer',
+    );
+    _stopServer = _lib.lookupFunction<StopServerC, StopServerDart>(
+      'StopServer',
+    );
+    _getBoundTcpPort = _lib
+        .lookupFunction<GetBoundTCPPortC, GetBoundTCPPortDart>(
+          'GetBoundTCPPort',
+        );
   }
 
   DynamicLibrary _openLibrary(String name) {
@@ -65,7 +74,11 @@ class BackendRunner {
       }
 
       // Fallback 3: Local development via `flutter run` from project root
-      final platformDir = Platform.isLinux ? 'linux' : Platform.isMacOS ? 'macos' : 'windows';
+      final platformDir = Platform.isLinux
+          ? 'linux'
+          : Platform.isMacOS
+          ? 'macos'
+          : 'windows';
       final devPath = '${Directory.current.path}/$platformDir/$name';
       if (File(devPath).existsSync()) {
         return DynamicLibrary.open(devPath);

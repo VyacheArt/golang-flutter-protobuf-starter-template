@@ -138,6 +138,13 @@ class GreetServiceApi {
           $pb.ClientContext? ctx, GreetRequest request) =>
       _client.invoke<GreetResponse>(
           ctx, 'GreetService', 'Greet', request, GreetResponse());
+
+  /// Full-duplex bidirectional streaming: every request is answered
+  /// immediately on the same stream. Requires an HTTP/2 transport.
+  $async.Future<GreetResponse> greetStream(
+          $pb.ClientContext? ctx, GreetRequest request) =>
+      _client.invoke<GreetResponse>(
+          ctx, 'GreetService', 'GreetStream', request, GreetResponse());
 }
 
 const $core.bool _omitFieldNames =

@@ -35,11 +35,17 @@ const (
 const (
 	// GreetServiceGreetProcedure is the fully-qualified name of the GreetService's Greet RPC.
 	GreetServiceGreetProcedure = "/greet.v1.GreetService/Greet"
+	// GreetServiceGreetStreamProcedure is the fully-qualified name of the GreetService's GreetStream
+	// RPC.
+	GreetServiceGreetStreamProcedure = "/greet.v1.GreetService/GreetStream"
 )
 
 // GreetServiceClient is a client for the greet.v1.GreetService service.
 type GreetServiceClient interface {
 	Greet(context.Context, *connect.Request[v1.GreetRequest]) (*connect.Response[v1.GreetResponse], error)
+	// Full-duplex bidirectional streaming: every request is answered
+	// immediately on the same stream. Requires an HTTP/2 transport.
+	GreetStream(context.Context) *connect.BidiStreamForClient[v1.GreetRequest, v1.GreetResponse]
 }
 
 // NewGreetServiceClient constructs a client for the greet.v1.GreetService service. By default, it
@@ -59,12 +65,19 @@ func NewGreetServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(greetServiceMethods.ByName("Greet")),
 			connect.WithClientOptions(opts...),
 		),
+		greetStream: connect.NewClient[v1.GreetRequest, v1.GreetResponse](
+			httpClient,
+			baseURL+GreetServiceGreetStreamProcedure,
+			connect.WithSchema(greetServiceMethods.ByName("GreetStream")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // greetServiceClient implements GreetServiceClient.
 type greetServiceClient struct {
-	greet *connect.Client[v1.GreetRequest, v1.GreetResponse]
+	greet       *connect.Client[v1.GreetRequest, v1.GreetResponse]
+	greetStream *connect.Client[v1.GreetRequest, v1.GreetResponse]
 }
 
 // Greet calls greet.v1.GreetService.Greet.
@@ -72,9 +85,17 @@ func (c *greetServiceClient) Greet(ctx context.Context, req *connect.Request[v1.
 	return c.greet.CallUnary(ctx, req)
 }
 
+// GreetStream calls greet.v1.GreetService.GreetStream.
+func (c *greetServiceClient) GreetStream(ctx context.Context) *connect.BidiStreamForClient[v1.GreetRequest, v1.GreetResponse] {
+	return c.greetStream.CallBidiStream(ctx)
+}
+
 // GreetServiceHandler is an implementation of the greet.v1.GreetService service.
 type GreetServiceHandler interface {
 	Greet(context.Context, *connect.Request[v1.GreetRequest]) (*connect.Response[v1.GreetResponse], error)
+	// Full-duplex bidirectional streaming: every request is answered
+	// immediately on the same stream. Requires an HTTP/2 transport.
+	GreetStream(context.Context, *connect.BidiStream[v1.GreetRequest, v1.GreetResponse]) error
 }
 
 // NewGreetServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -90,10 +111,18 @@ func NewGreetServiceHandler(svc GreetServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(greetServiceMethods.ByName("Greet")),
 		connect.WithHandlerOptions(opts...),
 	)
+	greetServiceGreetStreamHandler := connect.NewBidiStreamHandler(
+		GreetServiceGreetStreamProcedure,
+		svc.GreetStream,
+		connect.WithSchema(greetServiceMethods.ByName("GreetStream")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/greet.v1.GreetService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case GreetServiceGreetProcedure:
 			greetServiceGreetHandler.ServeHTTP(w, r)
+		case GreetServiceGreetStreamProcedure:
+			greetServiceGreetStreamHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -105,4 +134,8 @@ type UnimplementedGreetServiceHandler struct{}
 
 func (UnimplementedGreetServiceHandler) Greet(context.Context, *connect.Request[v1.GreetRequest]) (*connect.Response[v1.GreetResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("greet.v1.GreetService.Greet is not implemented"))
+}
+
+func (UnimplementedGreetServiceHandler) GreetStream(context.Context, *connect.BidiStream[v1.GreetRequest, v1.GreetResponse]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("greet.v1.GreetService.GreetStream is not implemented"))
 }

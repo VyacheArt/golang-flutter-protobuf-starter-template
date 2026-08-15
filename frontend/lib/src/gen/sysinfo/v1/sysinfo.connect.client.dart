@@ -7,7 +7,7 @@ import "package:connectrpc/connect.dart" as connect;
 import "sysinfo.pb.dart" as sysinfov1sysinfo;
 import "sysinfo.connect.spec.dart" as specs;
 
-extension type SysInfoServiceClient (connect.Transport _transport) {
+extension type SysInfoServiceClient(connect.Transport _transport) {
   Future<sysinfov1sysinfo.GetSystemInfoResponse> getSystemInfo(
     sysinfov1sysinfo.GetSystemInfoRequest input, {
     connect.Headers? headers,

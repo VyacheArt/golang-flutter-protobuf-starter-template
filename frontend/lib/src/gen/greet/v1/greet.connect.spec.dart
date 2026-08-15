@@ -16,4 +16,13 @@ abstract final class GreetService {
     greetv1greet.GreetRequest.new,
     greetv1greet.GreetResponse.new,
   );
+
+  /// Full-duplex bidirectional streaming: every request is answered
+  /// immediately on the same stream. Requires an HTTP/2 transport.
+  static const greetStream = connect.Spec(
+    '/$name/GreetStream',
+    connect.StreamType.bidi,
+    greetv1greet.GreetRequest.new,
+    greetv1greet.GreetResponse.new,
+  );
 }

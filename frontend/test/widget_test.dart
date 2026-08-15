@@ -2,12 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/main.dart';
 import 'package:frontend/src/core/backend.dart';
 import 'package:frontend/src/rpc/transport_stub.dart'
-    if (dart.library.io) 'package:frontend/src/rpc/transport_io.dart' as rpc;
+    if (dart.library.io) 'package:frontend/src/rpc/transport_io.dart'
+    as rpc;
 
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
     final backend = Backend(rpc.getTransport('dummy'));
-    
+
     // Build our app and trigger a frame.
     await tester.pumpWidget(MyApp(backend: backend));
 

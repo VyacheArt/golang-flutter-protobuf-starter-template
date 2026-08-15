@@ -19,11 +19,15 @@ class Backend {
     // Windows has no usable UDS: dart:io throws on InternetAddressType.unix,
     // while Go's net.Listen("unix") deceptively succeeds, so the app would
     // look healthy but fail on the first RPC. Always use TCP there.
-    final useTcp = Platform.isWindows ||
+    final useTcp =
+        Platform.isWindows ||
         useTcpEnv == 'true' ||
         Platform.environment['APP_USE_TCP'] == 'true';
 
-    const tcpAddressEnv = String.fromEnvironment('APP_TCP_ADDRESS', defaultValue: '');
+    const tcpAddressEnv = String.fromEnvironment(
+      'APP_TCP_ADDRESS',
+      defaultValue: '',
+    );
     final envTcpAddress = tcpAddressEnv.isNotEmpty
         ? tcpAddressEnv
         : (Platform.environment['APP_TCP_ADDRESS'] ?? '');
@@ -40,12 +44,16 @@ class Backend {
         if (explicitTcpAddress == null) {
           tcpAddress = '127.0.0.1:${runner.getBoundTcpPort()}';
         }
-        debugPrint('[Frontend] FFI Backend started natively on TCP: $tcpAddress');
+        debugPrint(
+          '[Frontend] FFI Backend started natively on TCP: $tcpAddress',
+        );
       } catch (e) {
         // An externally started backend (make run-backend-standalone) listens
         // on the standalone default unless APP_TCP_ADDRESS says otherwise.
         tcpAddress = explicitTcpAddress ?? '127.0.0.1:8080';
-        debugPrint('[Frontend] Could not start FFI TCP backend, assuming it is running externally: $e');
+        debugPrint(
+          '[Frontend] Could not start FFI TCP backend, assuming it is running externally: $e',
+        );
       }
 
       debugPrint('[Frontend] Configuring transport for TCP: $tcpAddress');
@@ -55,9 +63,13 @@ class Backend {
       final socketPath = '${Directory.systemTemp.path}/app_backend_$pid.sock';
       try {
         runner.startUds(socketPath);
-        debugPrint('[Frontend] FFI Backend started natively on UDS: $socketPath');
+        debugPrint(
+          '[Frontend] FFI Backend started natively on UDS: $socketPath',
+        );
       } catch (e) {
-        debugPrint('[Frontend] Could not start FFI UDS backend, assuming it is running externally: $e');
+        debugPrint(
+          '[Frontend] Could not start FFI UDS backend, assuming it is running externally: $e',
+        );
       }
 
       debugPrint('[Frontend] Configuring transport for UDS: $socketPath');

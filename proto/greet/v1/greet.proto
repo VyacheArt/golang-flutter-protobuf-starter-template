@@ -14,4 +14,7 @@ message GreetResponse {
 
 service GreetService {
   rpc Greet(GreetRequest) returns (GreetResponse) {}
+  // Full-duplex bidirectional streaming: every request is answered
+  // immediately on the same stream. Requires an HTTP/2 transport.
+  rpc GreetStream(stream GreetRequest) returns (stream GreetResponse) {}
 }
